@@ -1,0 +1,10 @@
+{
+  "hire_id": null,
+  "created_at": null,
+  "agents": [],
+  "summary": {
+    "total_agents": 0,
+    "total_tools_assigned": 0,
+    "coverage": "0%"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "proj-001": {
+    "project_id": "proj-001",
+    "name": "사입판매 비즈니스 런칭",
+    "goal": "1월 내 쿠팡/스마트스토어 개설 및 자동화 프로세스 구축",
+    "phases": [
+      {"id": "phase-2", "name": "첫 상품 선정", "order": 1, "status": "completed"},
+      {"id": "phase-1", "name": "스토어 개설", "order": 2, "status": "completed"},
+      {"id": "phase-3", "name": "상품 등록 및 판매", "order": 3, "status": "in_progress"},
+      {"id": "phase-4", "name": "자동화 시스템 구축", "order": 4, "status": "pending"}
+    ],
+    "status": "in_progress",
+    "created_at": "2026-01-19T10:10:00Z",
+    "selected_product": {
+      "name": "TPU 투명 폰케이스",
+      "aliexpress_id": "1005009898883300",
+      "unit_cost": 1214,
+      "quantity": 100,
+      "target_models": ["iPhone 16", "iPhone 16 Pro", "iPhone 16 Pro Max"]
+    }
+  }
+}

@@ -1,0 +1,287 @@
+{
+  "task-005": {
+    "task_id": "task-005",
+    "name": "트렌드 키워드 리서치",
+    "type": "RESEARCH",
+    "phase": "phase-2",
+    "assigned_agent": "expert-001",
+    "status": "completed",
+    "priority": 1,
+    "dependencies": [],
+    "required_inputs": [],
+    "tools": ["네이버 데이터랩", "구글 트렌드", "셀러툴"],
+    "approval_points": [],
+    "execution_steps": [
+      {"step": 1, "action": "문구류/생활용품/잡화 카테고리 트렌드 조사"},
+      {"step": 2, "action": "검색량 상승 키워드 30개 이상 발굴"},
+      {"step": 3, "action": "경쟁강도 분석 (낮은 경쟁 키워드 선별)"},
+      {"step": 4, "action": "후보 키워드 10개 선정 및 보고"}
+    ],
+    "expected_output": "유망 키워드 10개 리스트 (검색량, 경쟁강도 포함)"
+  },
+  "task-006": {
+    "task_id": "task-006",
+    "name": "경쟁 분석 및 수익성 검토",
+    "type": "RESEARCH",
+    "phase": "phase-2",
+    "assigned_agent": "expert-001",
+    "status": "completed",
+    "priority": 2,
+    "dependencies": ["task-005"],
+    "required_inputs": [],
+    "tools": ["쿠팡", "스마트스토어", "1688.com"],
+    "approval_points": [],
+    "execution_steps": [
+      {"step": 1, "action": "후보 키워드별 쿠팡/스마트스토어 경쟁 상품 조사"},
+      {"step": 2, "action": "판매가 및 리뷰 수 분석"},
+      {"step": 3, "action": "1688/알리바바 원가 조사"},
+      {"step": 4, "action": "예상 마진율 계산 (목표: 순이익률 10% 이상)"},
+      {"step": 5, "action": "수익성 높은 상위 5개 아이템 선정"}
+    ],
+    "expected_output": "수익성 분석 보고서 (상위 5개 아이템, 예상 마진율)"
+  },
+  "task-007": {
+    "task_id": "task-007",
+    "name": "최종 아이템 선정",
+    "type": "APPROVAL",
+    "phase": "phase-2",
+    "assigned_agent": null,
+    "status": "completed",
+    "priority": 3,
+    "dependencies": ["task-006"],
+    "required_inputs": [],
+    "tools": [],
+    "approval_points": [
+      {"point": "item_selection", "description": "CEO가 최종 판매 아이템 선정"}
+    ],
+    "execution_steps": [
+      {"step": 1, "action": "후보 아이템 5개 CEO에게 제시"},
+      {"step": 2, "action": "CEO 최종 선택 (1-3개)"},
+      {"step": 3, "action": "선정 아이템 확정"}
+    ],
+    "expected_output": "최종 선정된 판매 아이템 리스트"
+  },
+  "task-008": {
+    "task_id": "task-008",
+    "name": "중국 도매 사이트 소싱",
+    "type": "ACTION",
+    "phase": "phase-2",
+    "assigned_agent": "expert-002",
+    "status": "completed",
+    "priority": 4,
+    "dependencies": ["task-007"],
+    "required_inputs": [
+      {"key": "selected_items", "description": "CEO가 선정한 최종 아이템"}
+    ],
+    "tools": ["1688.com", "알리바바", "타오바오"],
+    "approval_points": [
+      {"point": "supplier_selection", "description": "공급업체 최종 선정 전 CEO 승인"}
+    ],
+    "execution_steps": [
+      {"step": 1, "action": "1688/알리바바에서 공급업체 검색"},
+      {"step": 2, "action": "최소 3개 업체 비교 (가격, MOQ, 리뷰)"},
+      {"step": 3, "action": "배송비/배송대행 비용 계산"},
+      {"step": 4, "action": "최종 단가 및 공급업체 선정"}
+    ],
+    "expected_output": "공급업체 정보 및 최종 단가표"
+  },
+  "task-001": {
+    "task_id": "task-001",
+    "name": "사업자등록 준비",
+    "type": "ACTION",
+    "phase": "phase-1",
+    "assigned_agent": null,
+    "status": "completed",
+    "priority": 10,
+    "dependencies": [],
+    "required_inputs": [
+      {"key": "business_type", "description": "사업자 유형 (개인/법인)"},
+      {"key": "business_name", "description": "상호명"},
+      {"key": "business_address", "description": "사업장 주소"}
+    ],
+    "tools": [],
+    "approval_points": [],
+    "execution_steps": [
+      {"step": 1, "action": "사업자등록 신청 (홈택스)"},
+      {"step": 2, "action": "통신판매업 신고"},
+      {"step": 3, "action": "사업자등록증 수령"}
+    ],
+    "expected_output": "사업자등록증, 통신판매업 신고증"
+  },
+  "task-002": {
+    "task_id": "task-002",
+    "name": "쿠팡 마켓플레이스 입점 신청",
+    "type": "ACTION",
+    "phase": "phase-1",
+    "assigned_agent": "expert-003",
+    "status": "completed",
+    "priority": 11,
+    "dependencies": ["task-001"],
+    "required_inputs": [
+      {"key": "business_number", "description": "사업자등록번호"}
+    ],
+    "tools": ["쿠팡 윙"],
+    "approval_points": [],
+    "execution_steps": [
+      {"step": 1, "action": "쿠팡 윙 회원가입"},
+      {"step": 2, "action": "판매자 정보 입력"},
+      {"step": 3, "action": "사업자 서류 제출"},
+      {"step": 4, "action": "입점 승인 대기"}
+    ],
+    "expected_output": "쿠팡 판매자 계정"
+  },
+  "task-003": {
+    "task_id": "task-003",
+    "name": "네이버 스마트스토어 개설",
+    "type": "ACTION",
+    "phase": "phase-1",
+    "assigned_agent": "expert-003",
+    "status": "completed",
+    "priority": 11,
+    "dependencies": ["task-001"],
+    "required_inputs": [
+      {"key": "business_number", "description": "사업자등록번호"}
+    ],
+    "tools": ["스마트스토어 센터"],
+    "approval_points": [],
+    "execution_steps": [
+      {"step": 1, "action": "스마트스토어 센터 접속"},
+      {"step": 2, "action": "스토어 개설 신청"},
+      {"step": 3, "action": "사업자 정보 등록"},
+      {"step": 4, "action": "스토어 기본 설정"}
+    ],
+    "expected_output": "스마트스토어 개설 완료"
+  },
+  "task-004": {
+    "task_id": "task-004",
+    "name": "스토어 기본 설정",
+    "type": "ACTION",
+    "phase": "phase-1",
+    "assigned_agent": "expert-003",
+    "status": "completed",
+    "priority": 12,
+    "dependencies": ["task-002", "task-003"],
+    "required_inputs": [],
+    "tools": ["쿠팡 윙", "스마트스토어 센터"],
+    "approval_points": [],
+    "execution_steps": [
+      {"step": 1, "action": "배송 정책 설정"},
+      {"step": 2, "action": "결제 수단 연동"},
+      {"step": 3, "action": "CS 정책 설정"},
+      {"step": 4, "action": "스토어 디자인 커스터마이징"}
+    ],
+    "expected_output": "스토어 운영 준비 완료"
+  },
+  "task-009": {
+    "task_id": "task-009",
+    "name": "상품 정보 정리",
+    "type": "DOCUMENT",
+    "phase": "phase-3",
+    "assigned_agent": "expert-003",
+    "status": "pending",
+    "priority": 1,
+    "dependencies": [],
+    "required_inputs": [],
+    "tools": [],
+    "approval_points": [],
+    "execution_steps": [
+      {"step": 1, "action": "상품명 작성 (SEO 최적화)"},
+      {"step": 2, "action": "검색 키워드 선정 (10개 이상)"},
+      {"step": 3, "action": "카테고리 매핑 (쿠팡/스마트스토어)"},
+      {"step": 4, "action": "상품 스펙 정리 (재질, 호환기종 등)"}
+    ],
+    "expected_output": "상품 정보 문서"
+  },
+  "task-010": {
+    "task_id": "task-010",
+    "name": "상세페이지 제작",
+    "type": "ACTION",
+    "phase": "phase-3",
+    "assigned_agent": "expert-003",
+    "status": "pending",
+    "priority": 2,
+    "dependencies": ["task-009"],
+    "required_inputs": [
+      {"key": "product_photos", "description": "상품 실물 사진"}
+    ],
+    "tools": ["상세페이지 에디터"],
+    "approval_points": [],
+    "execution_steps": [
+      {"step": 1, "action": "메인 이미지 제작 (흰 배경, 정면)"},
+      {"step": 2, "action": "상세 이미지 제작 (특징, 장점)"},
+      {"step": 3, "action": "사용 예시 이미지"},
+      {"step": 4, "action": "호환 기종 안내 이미지"}
+    ],
+    "expected_output": "상세페이지 이미지 세트"
+  },
+  "task-011": {
+    "task_id": "task-011",
+    "name": "쿠팡 상품 등록",
+    "type": "ACTION",
+    "phase": "phase-3",
+    "assigned_agent": "expert-003",
+    "status": "pending",
+    "priority": 3,
+    "dependencies": ["task-010"],
+    "required_inputs": [],
+    "tools": ["쿠팡 윙"],
+    "approval_points": [
+      {"point": "before_submit", "description": "등록 전 최종 확인"}
+    ],
+    "execution_steps": [
+      {"step": 1, "action": "쿠팡 윙 접속"},
+      {"step": 2, "action": "상품 등록 > 카테고리 선택"},
+      {"step": 3, "action": "상품 정보 입력"},
+      {"step": 4, "action": "이미지 업로드"},
+      {"step": 5, "action": "옵션 설정 (기종별)"},
+      {"step": 6, "action": "등록 완료"}
+    ],
+    "expected_output": "쿠팡 상품 페이지 URL"
+  },
+  "task-012": {
+    "task_id": "task-012",
+    "name": "스마트스토어 상품 등록",
+    "type": "ACTION",
+    "phase": "phase-3",
+    "assigned_agent": "expert-003",
+    "status": "pending",
+    "priority": 3,
+    "dependencies": ["task-010"],
+    "required_inputs": [],
+    "tools": ["스마트스토어 센터"],
+    "approval_points": [
+      {"point": "before_submit", "description": "등록 전 최종 확인"}
+    ],
+    "execution_steps": [
+      {"step": 1, "action": "스마트스토어 센터 접속"},
+      {"step": 2, "action": "상품 등록 > 카테고리 선택"},
+      {"step": 3, "action": "상품 정보 입력"},
+      {"step": 4, "action": "이미지 업로드"},
+      {"step": 5, "action": "옵션 설정 (기종별)"},
+      {"step": 6, "action": "등록 완료"}
+    ],
+    "expected_output": "스마트스토어 상품 페이지 URL"
+  },
+  "task-013": {
+    "task_id": "task-013",
+    "name": "가격/재고 설정",
+    "type": "ACTION",
+    "phase": "phase-3",
+    "assigned_agent": "expert-005",
+    "status": "pending",
+    "priority": 4,
+    "dependencies": ["task-011", "task-012"],
+    "required_inputs": [],
+    "tools": ["쿠팡 윙", "스마트스토어 센터"],
+    "approval_points": [
+      {"point": "price_confirm", "description": "최종 판매가 CEO 승인"}
+    ],
+    "execution_steps": [
+      {"step": 1, "action": "원가 기반 판매가 계산"},
+      {"step": 2, "action": "경쟁사 가격 확인"},
+      {"step": 3, "action": "최종 판매가 설정"},
+      {"step": 4, "action": "재고 수량 입력 (100개)"}
+    ],
+    "expected_output": "가격/재고 설정 완료"
+  }
+}

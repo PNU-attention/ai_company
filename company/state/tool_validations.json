@@ -1,0 +1,11 @@
+{
+  "validation_id": null,
+  "created_at": null,
+  "validations": [],
+  "summary": {
+    "total": 0,
+    "available": 0,
+    "unavailable_with_alternatives": 0,
+    "unavailable_no_alternatives": 0
+  }
+}

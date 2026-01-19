@@ -1,0 +1,11 @@
+{
+  "backlog_id": null,
+  "created_at": null,
+  "goal": null,
+  "projects": [],
+  "summary": {
+    "total_projects": 0,
+    "total_tasks": 0,
+    "tool_categories_needed": []
+  }
+}

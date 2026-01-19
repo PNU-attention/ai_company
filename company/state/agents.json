@@ -1,0 +1,79 @@
+{
+  "hr-agent": {
+    "agent_id": "hr-agent",
+    "role": "hr",
+    "role_name": "HR Manager",
+    "description": "CEO 목표 분석 및 전문가 에이전트 생성 담당",
+    "specialties": ["인력 분석", "역할 정의", "팀 구성"],
+    "tools": [],
+    "limitations": [],
+    "status": "active",
+    "created_at": "system"
+  },
+  "rm-agent": {
+    "agent_id": "rm-agent",
+    "role": "rm",
+    "role_name": "Resource Manager",
+    "description": "프로젝트 관리 및 태스크 오케스트레이션 담당",
+    "specialties": ["프로젝트 관리", "태스크 분해", "리소스 할당"],
+    "tools": [],
+    "limitations": [],
+    "status": "active",
+    "created_at": "system"
+  },
+  "expert-001": {
+    "agent_id": "expert-001",
+    "role": "expert",
+    "role_name": "트렌드 리서처",
+    "description": "유행 키워드 발굴 및 시장 분석 담당",
+    "specialties": ["키워드 발굴", "트렌드 분석", "경쟁사 분석", "수요 예측"],
+    "tools": ["네이버 데이터랩", "구글 트렌드", "셀러툴", "아이템스카우트"],
+    "limitations": [],
+    "status": "active",
+    "created_at": "2026-01-19T10:05:00Z"
+  },
+  "expert-002": {
+    "agent_id": "expert-002",
+    "role": "expert",
+    "role_name": "소싱 전문가",
+    "description": "중국 도매 사이트 소싱 및 사입 담당",
+    "specialties": ["알리바바 소싱", "타오바오 소싱", "1688 소싱", "단가 협상", "품질 관리"],
+    "tools": ["알리바바", "타오바오", "1688.com", "배송대행 서비스"],
+    "limitations": ["옷/건기식 등 전문성 필요 아이템 자제"],
+    "status": "active",
+    "created_at": "2026-01-19T10:05:00Z"
+  },
+  "expert-003": {
+    "agent_id": "expert-003",
+    "role": "expert",
+    "role_name": "이커머스 전문가",
+    "description": "쿠팡/스마트스토어 운영 및 상품 등록 담당",
+    "specialties": ["쿠팡 입점", "스마트스토어 운영", "상품 등록", "SEO 최적화", "상세페이지 제작"],
+    "tools": ["쿠팡 윙", "스마트스토어 센터", "상세페이지 에디터"],
+    "limitations": [],
+    "status": "active",
+    "created_at": "2026-01-19T10:05:00Z"
+  },
+  "expert-004": {
+    "agent_id": "expert-004",
+    "role": "expert",
+    "role_name": "자동화 엔지니어",
+    "description": "키워드 발굴 → 사입 → 판매등록 프로세스 자동화 담당",
+    "specialties": ["프로세스 자동화", "크롤링", "API 연동", "워크플로우 설계"],
+    "tools": ["Python", "Selenium", "API", "n8n", "Make"],
+    "limitations": [],
+    "status": "active",
+    "created_at": "2026-01-19T10:05:00Z"
+  },
+  "expert-005": {
+    "agent_id": "expert-005",
+    "role": "expert",
+    "role_name": "물류/CS 매니저",
+    "description": "재고 관리, 배송 처리, 고객 응대 담당",
+    "specialties": ["재고 관리", "배송 처리", "CS 응대", "리뷰 관리", "반품/교환 처리"],
+    "tools": ["재고관리 시스템", "배송 추적", "CS 도구"],
+    "limitations": [],
+    "status": "active",
+    "created_at": "2026-01-19T10:05:00Z"
+  }
+}

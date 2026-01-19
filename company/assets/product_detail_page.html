@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아이폰16 투명 케이스 상세페이지</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background: #ffffff;
+            max-width: 860px;
+            margin: 0 auto;
+        }
+        .section {
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        /* 헤더 섹션 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 30px;
+        }
+        .header h1 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
+        }
+        .header .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        .header .tags {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .header .tag {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+        }
+
+        /* 특징 섹션 */
+        .features {
+            background: #f8f9fa;
+        }
+        .features h2 {
+            font-size: 26px;
+            color: #333;
+            margin-bottom: 40px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .feature-item {
+            background: white;
+            padding: 30px 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        .feature-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .feature-desc {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* 스펙 섹션 */
+        .specs {
+            background: white;
+        }
+        .specs h2 {
+            font-size: 26px;
+            color: #333;
+            margin-bottom: 35px;
+        }
+        .spec-table {
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: left;
+        }
+        .spec-row {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            padding: 18px 0;
+        }
+        .spec-label {
+            width: 140px;
+            font-weight: 600;
+            color: #555;
+        }
+        .spec-value {
+            flex: 1;
+            color: #333;
+        }
+
+        /* 호환 기종 */
+        .compatibility {
+            background: #f0f4ff;
+        }
+        .compatibility h2 {
+            font-size: 26px;
+            color: #333;
+            margin-bottom: 35px;
+        }
+        .model-list {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .model-item {
+            background: white;
+            padding: 25px 40px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+        }
+        .model-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+        .model-check {
+            color: #22c55e;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        /* 배송/AS */
+        .shipping {
+            background: #333;
+            color: white;
+        }
+        .shipping h2 {
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        .shipping-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .shipping-item h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #a5b4fc;
+        }
+        .shipping-item p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #ccc;
+        }
+
+        /* 푸터 */
+        .footer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 50px 30px;
+        }
+        .footer h2 {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+        .footer p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .price-tag {
+            display: inline-block;
+            background: white;
+            color: #764ba2;
+            font-size: 32px;
+            font-weight: 800;
+            padding: 15px 40px;
+            border-radius: 50px;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <div class="section header">
+        <h1>아이폰16 투명 케이스</h1>
+        <p class="subtitle">에어쿠션 범퍼 | 슬림핏 | 무선충전 호환</p>
+        <div class="tags">
+            <span class="tag">✨ 크리스탈 투명</span>
+            <span class="tag">🛡️ 에어쿠션</span>
+            <span class="tag">📱 슬림핏</span>
+        </div>
+    </div>
+
+    <!-- 특징 -->
+    <div class="section features">
+        <h2>✅ 이 케이스를 선택해야 하는 이유</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="feature-icon">💎</div>
+                <div class="feature-title">크리스탈 투명</div>
+                <div class="feature-desc">아이폰 본연의<br>아름다운 색상 그대로</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🛡️</div>
+                <div class="feature-title">에어쿠션 범퍼</div>
+                <div class="feature-desc">네 모서리<br>충격 흡수 설계</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">✋</div>
+                <div class="feature-title">스트라이프 패턴</div>
+                <div class="feature-desc">미끄럼 방지<br>그립감 UP</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🔌</div>
+                <div class="feature-title">정밀 가공</div>
+                <div class="feature-desc">버튼/포트<br>완벽 호환</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🔋</div>
+                <div class="feature-title">무선충전 OK</div>
+                <div class="feature-desc">케이스 그대로<br>무선충전 가능</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">⏰</div>
+                <div class="feature-title">황변방지</div>
+                <div class="feature-desc">오래 써도<br>깨끗한 투명함</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 스펙 -->
+    <div class="section specs">
+        <h2>📋 상품 정보</h2>
+        <div class="spec-table">
+            <div class="spec-row">
+                <div class="spec-label">소재</div>
+                <div class="spec-value">프리미엄 TPU (황변방지)</div>
+            </div>
+            <div class="spec-row">
+                <div class="spec-label">두께</div>
+                <div class="spec-value">약 1.2mm (슬림핏)</div>
+            </div>
+            <div class="spec-row">
+                <div class="spec-label">무게</div>
+                <div class="spec-value">약 25g (초경량)</div>
+            </div>
+            <div class="spec-row">
+                <div class="spec-label">색상</div>
+                <div class="spec-value">투명 (Clear)</div>
+            </div>
+            <div class="spec-row">
+                <div class="spec-label">무선충전</div>
+                <div class="spec-value">호환 가능</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 호환 기종 -->
+    <div class="section compatibility">
+        <h2>📱 호환 기종</h2>
+        <div class="model-list">
+            <div class="model-item">
+                <div class="model-check">✓</div>
+                <div class="model-name">iPhone 16</div>
+            </div>
+            <div class="model-item">
+                <div class="model-check">✓</div>
+                <div class="model-name">iPhone 16 Pro</div>
+            </div>
+            <div class="model-item">
+                <div class="model-check">✓</div>
+                <div class="model-name">iPhone 16 Pro Max</div>
+            </div>
+        </div>
+        <p style="margin-top: 25px; color: #666; font-size: 14px;">⚠️ 주문 시 옵션에서 기종을 정확히 선택해주세요!</p>
+    </div>
+
+    <!-- 배송/AS -->
+    <div class="section shipping">
+        <h2>🚚 배송 & 교환/반품 안내</h2>
+        <div class="shipping-grid">
+            <div class="shipping-item">
+                <h3>📦 배송 안내</h3>
+                <p>• 오늘 주문 → 1-2일 내 출고<br>• 무료배송</p>
+            </div>
+            <div class="shipping-item">
+                <h3>💬 교환/반품</h3>
+                <p>• 제품 불량 시 100% 교환/환불<br>• 단순 변심: 수령 후 7일 이내</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="section footer">
+        <h2>지금 바로 주문하세요!</h2>
+        <p>아이폰16의 아름다움을 그대로, 보호는 확실하게</p>
+        <div class="price-tag">₩4,900~</div>
+    </div>
+</body>
+</html>
