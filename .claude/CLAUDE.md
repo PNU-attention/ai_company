@@ -15,9 +15,10 @@
 ### 핵심 원칙
 
 1. **Tool-Aware 워크플로우**: CEO가 Tool을 직접 선택하고 사전 검증
-2. **Subagent 아키텍처**: 독립 컨텍스트에서 실행되는 에이전트
-3. **Spec-Driven Development**: 코드 작성 전 요구사항/스펙 정의 필수
-4. **파일 기반 결과물**: 모든 산출물은 JSON/Markdown으로 저장
+2. **Rube MCP 기반 외부 서비스 통합**: 500+ 비즈니스 앱 연동으로 에이전트가 실제 외부 업무 수행
+3. **Subagent 아키텍처**: 독립 컨텍스트에서 실행되는 에이전트
+4. **Spec-Driven Development**: 코드 작성 전 요구사항/스펙 정의 필수
+5. **파일 기반 결과물**: 모든 산출물은 JSON/Markdown으로 저장
 
 ---
 
@@ -25,6 +26,7 @@
 
 ```
 ai_company/
+├── .mcp.json                    # 프로젝트 레벨 MCP 설정 (Rube 기본 포함)
 ├── .claude/
 │   ├── agents/                  # Subagent 정의 (독립 컨텍스트 실행)
 │   │   ├── ceo-agent.md         # CEO 역할 에이전트
@@ -150,10 +152,127 @@ Phase 2: 실행
 - `/frontend-design` - 웹 UI 코드 생성
 - `/mcp-builder` - MCP 서버 생성
 
-### MCP (설정 필요)
+### MCP (프로젝트 레벨 설정 - `.mcp.json`)
+- **`rube` - 외부 서비스 통합 허브** (아래 상세 설명 참조) **[기본 설정됨]**
 - `figma` - Figma 디자인 연동
-- `rube` - 워크플로우 자동화
 - `github` - GitHub 연동
+
+---
+
+## Rube MCP - 외부 서비스 통합
+
+### 개요
+
+[Rube](https://rube.app)는 Composio 기반 MCP 서버로, **500개 이상의 외부 비즈니스 앱**을 AI 에이전트에 연결합니다. 본 프로젝트에서 **Expert 에이전트가 실제 외부 업무를 수행하기 위한 핵심 인프라**입니다.
+
+### 왜 Rube가 핵심인가?
+
+AI 에이전트가 "회사 직원"처럼 일하려면, 단순 검색/파일 작업을 넘어 **이메일 발송, 스프레드시트 작성, 이슈 생성, Slack 알림** 같은 외부 서비스 조작이 필수입니다. Rube는 이 모든 외부 서비스를 **하나의 MCP 엔드포인트**로 통합합니다.
+
+```
+Built-in 도구만으로는 부족한 영역:
+──────────────────────────────────
+✅ 정보 검색 (WebSearch, WebFetch)
+✅ 파일 작업 (Read, Write, Edit)
+✅ 코드 실행 (Bash)
+❌ 이메일 발송, 캘린더 관리
+❌ Slack/Discord 메시지
+❌ Google Sheets/Notion 데이터 조작
+❌ Jira/Linear 이슈 관리
+❌ CRM/결제 시스템 연동
+
+→ Rube MCP가 이 모든 ❌ 영역을 ✅로 전환
+```
+
+### 주요 지원 앱 카테고리
+
+| 카테고리 | 앱 예시 | Expert 활용 시나리오 |
+|----------|---------|---------------------|
+| 커뮤니케이션 | Gmail, Slack, Discord | 리서치 결과 이메일 발송, 팀 채널 알림 |
+| 프로젝트 관리 | Jira, Asana, Linear | 태스크 이슈 생성, 진행 상황 업데이트 |
+| 문서/노트 | Notion, Google Docs | 분석 보고서 작성, 위키 페이지 생성 |
+| 스프레드시트 | Google Sheets, Airtable | 경쟁사 분석 데이터 정리, 가격 모니터링 |
+| CRM | HubSpot, Salesforce | 고객 데이터 관리, 리드 추적 |
+| 코드 저장소 | GitHub, GitLab | PR 생성, 코드 리뷰 코멘트 |
+| 결제/이커머스 | Stripe, Shopify | 주문 관리, 결제 데이터 조회 |
+
+### 워크플로우에서의 역할
+
+```
+③ CEO Tool 선택 시:
+   CEO: "리서치 결과를 Google Sheets에 정리하고, 완료되면 Slack으로 알려줘"
+        → Tool Agent가 Rube를 통해 Sheets, Slack 사용 가능 여부 검증
+
+⑤ HR 에이전트 고용 시:
+   Rube 앱 접근 권한을 Expert에게 Tool로 할당
+
+⑧ Expert 실행 시:
+   Expert가 Rube MCP를 통해 외부 앱에 직접 액션 수행
+```
+
+### Tool Agent의 Rube 검증 로직
+
+Tool Agent는 CEO가 선택한 외부 서비스가 Rube를 통해 사용 가능한지 검증합니다:
+
+```
+CEO 요청: "Gmail로 보고서 발송"
+     │
+     ▼
+Tool Agent 검증:
+  1. Rube MCP 서버 연결 상태 확인
+  2. Rube Marketplace에서 Gmail 앱 연결 여부 확인
+  3. 필요 권한(scope) 충족 여부 확인
+     │
+     ├── ✅ 사용 가능 → HR에게 Tool 정보 전달
+     └── ❌ 미연결 → CEO에게 앱 연결 안내
+         "rube.app/marketplace에서 Gmail을 연결해주세요"
+```
+
+### Rube 선택 근거 (대안 비교)
+
+| 도구 | 앱 수 | 특징 | 선택하지 않은 이유 |
+|------|-------|------|-------------------|
+| **Rube (Composio)** | 500+ | Claude Code 네이티브, 노코드, 무료 | **채택** |
+| ACI.dev | 500+ | 오픈소스, 자체 호스팅 | Claude Code MCP 네이티브 지원 부족 |
+| Pipedream | 10,000+ | 앱 수 최대, 코드 작성 필요 | 에이전트 프롬프트 기반과 맞지 않음 |
+| n8n | 400+ | 오픈소스, 비주얼 빌더 | MCP 지원 미흡, 비주얼 빌더 중심 |
+| Arcade.dev | - | 보안 특화 | 앱 수 제한적 |
+
+**채택 이유 요약:**
+1. Claude Code `.mcp.json` 프로젝트 설정으로 즉시 사용 가능 (클론 후 바로 동작)
+2. 자연어 기반 → Expert 에이전트가 코드 없이 외부 앱 조작
+3. Composio 인프라 (SOC 2 Type II, OAuth 자동 관리, 토큰 격리)
+4. 무료 + MCP 표준 기반 (향후 교체 용이)
+
+### 프로젝트 레벨 설정 (`.mcp.json`)
+
+Rube는 프로젝트 루트의 `.mcp.json`에 기본 설정되어 있습니다. 프로젝트를 클론하면 별도 설치 없이 사용 가능합니다.
+
+```json
+// .mcp.json (프로젝트 루트, git에 포함)
+{
+  "mcpServers": {
+    "rube": {
+      "type": "http",
+      "url": "https://rube.app/mcp"
+    }
+  }
+}
+```
+
+**최초 사용 시 필요한 작업:**
+1. Claude Code에서 Rube MCP 서버 연결 승인
+2. [rube.app/marketplace](https://rube.app/marketplace)에서 사용할 앱 OAuth 연결
+
+> API Key/시크릿은 `.mcp.json`에 포함되지 않음. 인증은 Rube가 OAuth로 처리하며 토큰은 Composio에서 관리.
+
+### 관련 상태 파일
+
+Rube를 통한 외부 서비스 사용은 다음 상태 파일에 기록됩니다:
+- `tool_selections.json` - CEO가 선택한 외부 서비스 (예: `["gmail_via_rube", "sheets_via_rube"]`)
+- `tool_validations.json` - Rube를 통한 사용 가능 여부 검증 결과
+- `hired_agents.json` - Expert에게 할당된 Rube 앱 목록
+- `execution_log.json` - Rube를 통해 수행한 외부 액션 로그
 
 ---
 
