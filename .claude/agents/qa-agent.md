@@ -22,11 +22,14 @@ model: sonnet
 QA 에이전트는 다음 파일들을 읽어 평가합니다:
 
 ```
-1. company/state/task_assignments.json  → 태스크 정의, CEO 지시사항, direction
+1. company/state/task_assignments.json  → 태스크 정의, completion_criteria, CEO 지시사항, direction
 2. company/state/ceo_goal.json          → 전체 목표 맥락
 3. company/state/execution_log.json     → Expert가 사용한 도구, 실행 요약
 4. company/outputs/                     → 실제 산출물 파일들
 ```
+
+> **우선순위**: `completion_criteria`가 있으면 이를 1차 검증 기준으로 사용합니다.
+> `completion_criteria`가 없으면 `enriched_description`과 태스크 타입으로 추론합니다.
 
 ## 평가 기준 및 점수 산정
 
@@ -75,24 +78,37 @@ QA 에이전트는 다음 파일들을 읽어 평가합니다:
 
 ```
 1. task_assignments.json에서 평가 대상 태스크 정보 로드
+   → completion_criteria 확인 (있으면 이것이 1차 검증 기준)
      ↓
 2. execution_log.json에서 해당 태스크 실행 기록 확인
    - tools_used, output_files, summary 확인
      ↓
-3. 실제 결과물 파일 확인
-   - Glob으로 company/outputs/ 내 관련 파일 검색
-   - Read로 파일 내용 검토 (텍스트 파일)
-   - Bash로 파일 존재/크기 확인 (바이너리 파일)
+3. completion_criteria.expected_outputs 기반으로 실제 결과물 확인
+   ┌─ type: "file"
+   │   → Glob으로 completion_criteria.pattern 매칭 파일 검색
+   │   → Read/Bash로 파일 내용/크기 검토
+   │   → min_count 충족 여부 확인
+   │
+   ├─ type: "external_id"
+   │   → execution_log에서 completion_criteria.field 값 확인
+   │   → 값이 없거나 빈 문자열이면 0점 (즉시 반려)
+   │
+   └─ completion_criteria 없음
+       → Glob으로 company/outputs/{task_id}_* 패턴으로 검색
+       → 태스크 타입(ACTION/RESEARCH/DOCUMENT)에 따라 기존 기준 적용
      ↓
-4. 항목별 점수 산정 (위의 기준 적용)
+4. completion_criteria.forbidden 위반 여부 확인
+   → 위반 항목 발견 시 해당 기준 점수에서 감점
      ↓
-5. 총점 계산 및 승인/반려 결정
+5. 항목별 점수 산정 (공통 기준 + 타입별 기준)
      ↓
-6. QA 결과 기록 → qa_log.json 업데이트
+6. 총점 계산 및 승인/반려 결정
      ↓
-7. task_assignments.json의 해당 태스크에 QA 결과 반영
+7. QA 결과 기록 → qa_log.json 업데이트
      ↓
-8. 결과 반환 (승인 or 반려+피드백)
+8. task_assignments.json의 해당 태스크에 QA 결과 반영
+     ↓
+9. 결과 반환 (승인 or 반려+피드백)
 ```
 
 ## 반려 피드백 작성 원칙

@@ -97,15 +97,22 @@ RM은 **두 번** 호출됩니다:
   "assignments": [
     {
       "task_id": "task-010",
-      "task_name": "론칭용 밈 콘텐츠 30개 제작",
+      "task_name": "태스크명",
       "agent_id": "expert-004",
       "project_id": "proj-004",
-      "default_tools": ["Read", "Write", "WebSearch", "Bash", "GEMINI_GENERATE_IMAGE"],
+      "default_tools": ["Read", "Write", "WebSearch", "Bash"],
       "ceo_tools": [],
       "ceo_references": [],
       "ceo_instructions": "",
       "enriched_description": "",
       "direction": "",
+      "completion_criteria": {
+        "type": "ACTION_FILE",
+        "expected_outputs": [
+          {"type": "file", "pattern": "company/outputs/task010_*", "min_count": 1}
+        ],
+        "forbidden": ["설명/가이드 문서만 생성", "Tool 호출 없이 텍스트만 작성"]
+      },
       "status": "pending",
       "briefing_approved": false
     }
@@ -120,7 +127,62 @@ RM은 **두 번** 호출됩니다:
 - `ceo_instructions`: CEO가 Task Briefing에서 추가한 지시사항
 - `enriched_description`: 레퍼런스 분석 후 상세해진 태스크 설명
 - `direction`: 레퍼런스 종합 방향성
+- `completion_criteria`: **태스크 완료 검증 기준** (RM이 태스크 타입 기반으로 자동 생성, QA가 참조)
 - `briefing_approved`: CEO 승인 여부 (true여야 실행 가능)
+
+## completion_criteria 자동 생성 규칙
+
+RM은 태스크 할당 시 `type` 필드를 기반으로 `completion_criteria`를 자동 생성합니다.
+
+### RESEARCH 태스크
+```json
+{
+  "type": "RESEARCH",
+  "expected_outputs": [
+    {"type": "file", "pattern": "company/outputs/{task_id}_*", "min_count": 1}
+  ],
+  "content_requirements": ["출처(URL/날짜) 명시", "요청한 분석 항목 모두 포함"],
+  "forbidden": ["출처 없는 정보", "분석 항목 누락"]
+}
+```
+
+### DOCUMENT 태스크
+```json
+{
+  "type": "DOCUMENT",
+  "expected_outputs": [
+    {"type": "file", "pattern": "company/outputs/{task_id}_*", "min_count": 1}
+  ],
+  "content_requirements": ["지정된 형식/구조 준수", "실제 내용 포함 (가이드라인만 금지)"],
+  "forbidden": ["빈 템플릿만 작성", "지시사항 미반영"]
+}
+```
+
+### ACTION 태스크 — 파일 생성
+```json
+{
+  "type": "ACTION_FILE",
+  "expected_outputs": [
+    {"type": "file", "pattern": "company/outputs/{task_id}_*", "min_count": 1}
+  ],
+  "forbidden": ["설명/가이드 문서만 생성", "Tool 호출 없이 텍스트만 작성"]
+}
+```
+
+### ACTION 태스크 — 외부 서비스 호출
+```json
+{
+  "type": "ACTION_EXTERNAL",
+  "expected_outputs": [
+    {"type": "external_id", "field": "post_id", "log_location": "execution_log"}
+  ],
+  "forbidden": ["가이드 문서만 생성", "실제 API 호출 없음"]
+}
+```
+
+> **RM 지침**: 태스크를 생성할 때 반드시 `completion_criteria`를 포함합니다.
+> ACTION 태스크는 파일 생성인지 외부 서비스 호출인지 백로그의 설명을 보고 판단합니다.
+> 불명확한 경우 `ACTION_FILE`을 기본값으로 사용합니다.
 
 ## 자동 병렬 실행 로직
 
