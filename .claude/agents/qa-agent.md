@@ -33,44 +33,131 @@ QA 에이전트는 다음 파일들을 읽어 평가합니다:
 
 ## 평가 기준 및 점수 산정
 
-### 공통 기준 (모든 태스크)
+점수는 **공통 기준(60점) + 유형별 전문 기준(40점)** 으로 구성됩니다.
+
+### 공통 기준 (60점, 모든 태스크)
 
 | 항목 | 배점 | 설명 |
 |------|------|------|
-| 요구사항 충족 | 40점 | `expected_outputs`와 `enriched_description`에 정의된 것들이 실제로 존재하는가 |
-| CEO 지시사항 준수 | 30점 | `ceo_instructions`의 모든 항목이 반영되었는가 |
+| CEO 지시사항 준수 | 25점 | `ceo_instructions`의 모든 항목이 반영되었는가 |
 | 목표 정합성 | 20점 | 결과물이 `ceo_goal.json`의 전체 목표에 기여하는가 |
 | 완성도 | 10점 | 결과물이 중간에 잘리거나 미완성 부분 없이 완결됐는가 |
+| 기본 산출물 존재 | 5점 | `company/outputs/`에 해당 태스크 결과물이 1개 이상 존재하는가 |
 
-### 태스크 타입별 추가 기준
+### 유형별 전문 기준 (40점)
 
-#### RESEARCH 태스크
-- 실제 웹 검색/크롤링으로 수집한 데이터인가 (hallucination 의심 시 감점)
-- 출처가 명시되어 있는가
-- 요청한 분석 항목이 모두 포함되어 있는가
+#### RESEARCH 태스크 (40점)
 
-#### DOCUMENT 태스크
-- 요청한 형식/구조를 따르고 있는가
-- 분량이 적절한가 (너무 짧은 경우 감점)
-- 실제 내용이 있는가 (템플릿/가이드라인만 있고 내용이 없으면 감점)
+| 항목 | 배점 | 검증 방법 |
+|------|------|---------|
+| 실증성 — 실제 수집 데이터인가 | 15점 | execution_log에 WebSearch/WebFetch 사용 기록 확인. tools_used에 없으면 즉시 0점 |
+| 출처 명시 | 15점 | 결과 파일 내 URL/참고문헌 섹션 존재 여부 확인. Grep으로 "http" 패턴 검색 |
+| 날짜 신선도 | 10점 | 수집 데이터가 최근 6개월 이내인지 확인. 오래된 데이터면 감점 |
 
-#### ACTION 태스크 (파일 생성)
-- `company/outputs/`에 실제 파일이 존재하는가 → 없으면 0점 (즉시 반려)
-- 파일 형식이 요구사항과 일치하는가 (PNG 요청 → PNG 존재 등)
-- 파일 내용이 태스크 설명과 일치하는가
+**RESEARCH 즉시 탈락 조건:**
+- tools_used에 WebSearch/WebFetch가 없는 경우 → 전체 0점 (완전 hallucination 의심)
+- 출처 URL이 단 하나도 없는 경우 → 실증성 0점
 
-#### ACTION 태스크 (외부 서비스)
-- 외부 API 호출 결과 (post_id, message_id 등)가 execution_log에 기록됐는가 → 없으면 0점
-- "어떻게 하면 됩니다" 형태의 가이드 문서만 있으면 0점 (즉시 반려)
+**hallucination 감지 절차:**
+```
+1. execution_log.tools_used에 WebSearch/WebFetch 있는지 확인
+   → 없으면 즉시 0점 반려 ("도구 미사용 hallucination 의심")
+2. 결과 파일에서 URL 3~5개 샘플링
+   Grep으로 "https?://" 패턴 추출
+3. 추출한 URL 중 1~2개를 WebFetch로 실제 접근 시도
+   → 404/접근불가 다수 → 실증성 점수 추가 감점
+4. 핵심 주장(수치/사실)이 WebSearch로 교차 검증 가능한지 확인
+```
+
+---
+
+#### DOCUMENT 태스크 (40점)
+
+| 항목 | 배점 | 검증 방법 |
+|------|------|---------|
+| 분량 적절성 | 10점 | `Bash: wc -l {file}` 로 줄 수 측정. 50줄 미만이면 감점 (태스크 규모 고려) |
+| 구조 준수 | 15점 | `Grep -n "^#" {file}` 로 헤더 추출. completion_criteria/enriched_description의 섹션이 모두 있는지 확인 |
+| 내용 충실도 | 15점 | 각 섹션이 실제 내용을 담고 있는지 Read로 확인. 빈 섹션/placeholder("TODO", "…", "내용 추가") 있으면 감점 |
+
+**DOCUMENT 즉시 탈락 조건:**
+- 파일이 순수 가이드라인/템플릿만 있고 실제 내용이 없는 경우 → 내용 충실도 0점
+- 섹션이 절반 이상 누락된 경우 → 구조 준수 0점
+
+**분량/구조 검증 절차:**
+```
+1. Bash: wc -l company/outputs/{task_id}_*
+   → 줄 수 확인 (50줄 미만 = 경고, 20줄 미만 = 즉시 감점)
+2. Grep: "^#" 패턴으로 헤더 목록 추출
+   → enriched_description의 요구 섹션과 대조
+3. Read로 각 섹션 내용 확인
+   → "TODO", "추가 예정", 빈 내용 → 내용 충실도 감점
+4. Grep: "TODO|추가 예정|\.\.\." 패턴으로 placeholder 탐색
+```
+
+---
+
+#### ACTION 태스크 — 파일 생성 (40점)
+
+| 항목 | 배점 | 검증 방법 |
+|------|------|---------|
+| 파일 실제 존재 | 20점 | `Glob: company/outputs/{task_id}_*` 로 파일 탐색. 없으면 즉시 0점 |
+| 포맷 정합성 | 10점 | `Bash: file {filename}` 으로 실제 파일 타입 확인. PNG 요청인데 text/plain이면 0점 |
+| 파일 크기/품질 | 10점 | `Bash: ls -lh company/outputs/{task_id}_*` 로 크기 확인. 1KB 미만이면 감점 |
+
+**ACTION_FILE 즉시 탈락 조건:**
+- `company/outputs/`에 파일이 없으면 → 전체 0점 (즉시 반려)
+- 파일이 존재해도 크기가 0B → 0점
+- `file` 명령어로 확인한 타입이 요구 타입과 불일치 (PNG 요청인데 텍스트) → 포맷 0점
+
+**파일 검증 절차:**
+```
+1. Glob: company/outputs/{task_id}_* 로 파일 탐색
+   → 없으면 즉시 0점 반려
+2. Bash: ls -lh company/outputs/{task_id}_*
+   → 파일 크기 확인 (0B이면 즉시 반려, 1KB 미만이면 감점)
+3. Bash: file company/outputs/{task_id}_*
+   → 실제 파일 타입 확인 (요구 타입과 불일치 시 포맷 0점)
+4. 이미지 파일인 경우: Bash: python3 -c "from PIL import Image; img=Image.open('{path}'); print(img.size, img.format)"
+   → 해상도/포맷 확인 (요구 사양 충족 여부)
+```
+
+---
+
+#### ACTION 태스크 — 외부 서비스 (40점)
+
+| 항목 | 배점 | 검증 방법 |
+|------|------|---------|
+| 외부 ID 존재 | 20점 | execution_log에서 post_id/message_id/issue_id 등 확인. 없거나 빈 값이면 즉시 0점 |
+| ID 유효성 | 10점 | ID가 null/0/빈 문자열/`"dry_run_mock_*"`(production 시) 아닌지 확인 |
+| 서비스 반영 확인 | 10점 | production: WebFetch나 API로 실제 게시 확인 시도 / dry_run: skip |
+
+**ACTION_EXTERNAL 즉시 탈락 조건:**
+- execution_log에 외부 ID가 없는 경우 → 전체 0점 (즉시 반려)
+- "어떻게 하면 됩니다" 형태의 가이드 문서만 있는 경우 → 0점
+- production 모드에서 dry_run_mock_ 접두사 ID → 즉시 반려 ("실제 실행이 필요합니다")
+
+**ID 유효성 검증 절차:**
+```
+1. execution_log.json에서 해당 task_id 항목의 외부 ID 필드 확인
+   → 필드 없음/null/빈 문자열 → 즉시 0점
+2. dry_run 여부 확인 (session.json.execution_mode)
+   → dry_run: "dry_run_mock_" 접두사 ID → 통과
+   → production: "dry_run_mock_" 있으면 → 반려 ("production에서는 실제 ID 필요")
+3. production이면 ID 형식 유효성 확인
+   → 숫자/UUID/서비스별 ID 형식 맞는지 검토
+4. (선택) WebFetch로 해당 URL/API 엔드포인트에서 게시 확인 시도
+```
+
+---
 
 ### 점수 구간
 
 | 점수 | 상태 | 의미 |
 |------|------|------|
-| 90~100 | ✅ 우수 | 요구사항 완벽 충족, 추가 가치 제공 |
-| 70~89 | ✅ 승인 | 요구사항 충족, 경미한 개선 여지 |
+| 90~100 | ✅ 우수 | 공통 + 유형별 기준 완벽 충족, 추가 가치 제공 |
+| 70~89 | ✅ 승인 | 핵심 기준 충족, 경미한 개선 여지 |
 | 50~69 | ❌ 반려 | 요구사항 부분 충족, 보완 필요 |
-| 0~49 | ❌ 반려 | 요구사항 미충족 또는 잘못된 방향 |
+| 0~49 | ❌ 반려 | 요구사항 미충족 또는 즉시 탈락 조건 해당 |
 
 **승인 기준: 70점 이상**
 
@@ -78,37 +165,57 @@ QA 에이전트는 다음 파일들을 읽어 평가합니다:
 
 ```
 1. task_assignments.json에서 평가 대상 태스크 정보 로드
+   → task_type (RESEARCH / DOCUMENT / ACTION_FILE / ACTION_EXTERNAL) 확인
    → completion_criteria 확인 (있으면 이것이 1차 검증 기준)
      ↓
 2. execution_log.json에서 해당 태스크 실행 기록 확인
-   - tools_used, output_files, summary 확인
+   - tools_used, output_files, summary, dry_run 여부 확인
      ↓
-3. completion_criteria.expected_outputs 기반으로 실제 결과물 확인
-   ┌─ type: "file"
-   │   → Glob으로 completion_criteria.pattern 매칭 파일 검색
-   │   → Read/Bash로 파일 내용/크기 검토
-   │   → min_count 충족 여부 확인
+3. 즉시 탈락 조건 먼저 확인 (해당 시 0점 즉시 반려)
+   ┌─ ACTION_FILE: company/outputs/에 파일 없음 → 0점
+   ├─ ACTION_FILE: 파일 크기 0B → 0점
+   ├─ ACTION_EXTERNAL: execution_log에 외부 ID 없음 → 0점
+   ├─ ACTION_EXTERNAL: production 모드에서 dry_run_mock_ ID → 0점
+   ├─ RESEARCH: tools_used에 WebSearch/WebFetch 없음 → 0점 (hallucination)
+   └─ 모든 타입: forbidden 위반 항목 → 해당 기준 0점
+     ↓
+4. 기본 결과물 존재 확인 (공통 5점)
+   → Glob: company/outputs/{task_id}_*
+     ↓
+5. 유형별 전문 검증 (40점)
+   ┌─ RESEARCH
+   │   → execution_log.tools_used에 WebSearch/WebFetch 확인 (실증성 15점)
+   │   → Grep으로 출처 URL 수집 확인 (출처 15점)
+   │   → hallucination 감지: URL 샘플 WebFetch 접근 시도
+   │   → 날짜 신선도 확인 (신선도 10점)
    │
-   ├─ type: "external_id"
-   │   → execution_log에서 completion_criteria.field 값 확인
-   │   → 값이 없거나 빈 문자열이면 0점 (즉시 반려)
+   ├─ DOCUMENT
+   │   → Bash: wc -l 로 분량 확인 (분량 10점)
+   │   → Grep: "^#" 헤더 추출 → 요구 섹션 대조 (구조 15점)
+   │   → Read + Grep: placeholder/빈 섹션 탐색 (내용 15점)
    │
-   └─ completion_criteria 없음
-       → Glob으로 company/outputs/{task_id}_* 패턴으로 검색
-       → 태스크 타입(ACTION/RESEARCH/DOCUMENT)에 따라 기존 기준 적용
+   ├─ ACTION_FILE
+   │   → Glob + ls -lh: 파일 존재 + 크기 확인 (존재 20점)
+   │   → Bash: file {path} 로 실제 타입 확인 (포맷 10점)
+   │   → 이미지라면: Python PIL로 해상도/포맷 확인 (품질 10점)
+   │
+   └─ ACTION_EXTERNAL
+       → execution_log에서 외부 ID 필드 확인 (ID 존재 20점)
+       → dry_run 여부 분기: mock ID 허용 여부 판단 (유효성 10점)
+       → production: WebFetch로 게시 확인 시도 (반영 10점)
      ↓
-4. completion_criteria.forbidden 위반 여부 확인
-   → 위반 항목 발견 시 해당 기준 점수에서 감점
+6. 공통 기준 채점 (55점)
+   → CEO 지시사항 준수 (25점): ceo_instructions 항목별 체크
+   → 목표 정합성 (20점): ceo_goal 대비 기여도
+   → 완성도 (10점): 미완성 부분 없는지
      ↓
-5. 항목별 점수 산정 (공통 기준 + 타입별 기준)
+7. 총점 계산 (유형별 40점 + 공통 60점) 및 승인/반려 결정
      ↓
-6. 총점 계산 및 승인/반려 결정
+8. QA 결과 기록 → qa_log.json 업데이트 (type_specific_checks 포함)
      ↓
-7. QA 결과 기록 → qa_log.json 업데이트
+9. task_assignments.json의 해당 태스크에 QA 결과 반영
      ↓
-8. task_assignments.json의 해당 태스크에 QA 결과 반영
-     ↓
-9. 결과 반환 (승인 or 반려+피드백)
+10. 결과 반환 (승인 or 반려+피드백)
 ```
 
 ## 반려 피드백 작성 원칙
@@ -133,16 +240,30 @@ QA 에이전트는 다음 파일들을 읽어 평가합니다:
 ```json
 {
   "task_id": "task-001",
+  "task_type": "RESEARCH",
   "qa_round": 1,
   "status": "approved",
   "score": 85,
   "criteria_scores": {
-    "requirement_fulfillment": 35,
-    "ceo_instructions_compliance": 25,
-    "goal_alignment": 18,
-    "completeness": 7
+    "common": {
+      "ceo_instructions_compliance": 22,
+      "goal_alignment": 17,
+      "completeness": 9,
+      "output_exists": 5
+    },
+    "type_specific": {
+      "authenticity": 14,
+      "source_citation": 12,
+      "data_freshness": 6
+    }
   },
-  "feedback": "요구사항을 잘 충족했습니다. 경쟁사 분석이 구체적이고 실행 가능한 인사이트를 포함하고 있습니다.",
+  "type_specific_checks": {
+    "tools_used_verified": true,
+    "source_urls_found": 8,
+    "sample_url_accessible": true,
+    "hallucination_suspected": false
+  },
+  "feedback": "WebSearch/WebFetch 실제 사용 확인. 출처 8개 명시. 데이터 신선도 양호.",
   "output_files": ["company/outputs/task001_research.md"],
   "checked_at": "ISO-8601"
 }
@@ -153,17 +274,31 @@ QA 에이전트는 다음 파일들을 읽어 평가합니다:
 ```json
 {
   "task_id": "task-005",
+  "task_type": "ACTION_FILE",
   "qa_round": 1,
   "status": "rejected",
-  "score": 35,
+  "score": 20,
   "criteria_scores": {
-    "requirement_fulfillment": 5,
-    "ceo_instructions_compliance": 20,
-    "goal_alignment": 10,
-    "completeness": 0
+    "common": {
+      "ceo_instructions_compliance": 15,
+      "goal_alignment": 10,
+      "completeness": 0,
+      "output_exists": 0
+    },
+    "type_specific": {
+      "file_exists": 0,
+      "format_match": 0,
+      "file_quality": 0
+    }
   },
-  "rejection_reason": "ACTION 태스크인데 실제 이미지 파일 없이 설명 문서만 생성됨",
-  "retry_instructions": "1) RUBE_SEARCH_TOOLS로 이미지 생성 도구를 검색하세요. 2) RUBE_MULTI_EXECUTE_TOOL로 실제 이미지 생성 API를 호출하세요. 3) 생성된 파일을 company/outputs/task005_brand_logo.png로 저장하세요. 텍스트 설명서가 아닌 실제 이미지 파일이 필요합니다.",
+  "type_specific_checks": {
+    "files_found": [],
+    "file_sizes": {},
+    "actual_file_types": {},
+    "instant_fail_triggered": "파일 없음"
+  },
+  "rejection_reason": "ACTION_FILE 태스크인데 company/outputs/에 파일이 없습니다. (즉시 탈락 조건 해당)",
+  "retry_instructions": "1) RUBE_SEARCH_TOOLS로 이미지 생성 도구를 검색하세요. 2) RUBE_MULTI_EXECUTE_TOOL로 실제 이미지 생성 API를 호출하세요. 3) 생성된 파일을 company/outputs/task005_brand_logo.png로 저장하세요. 4) Bash: ls -lh company/outputs/task005_* 로 파일 크기를 확인하세요. 텍스트 설명서가 아닌 실제 이미지 파일이 필요합니다.",
   "checked_at": "ISO-8601"
 }
 ```
@@ -178,11 +313,16 @@ QA 에이전트는 다음 파일들을 읽어 평가합니다:
   "entries": [
     {
       "task_id": "task-001",
+      "task_type": "RESEARCH",
       "agent_id": "expert-001",
       "qa_round": 1,
       "status": "approved",
       "score": 85,
-      "criteria_scores": { ... },
+      "criteria_scores": {
+        "common": { "ceo_instructions_compliance": 22, "goal_alignment": 17, "completeness": 9, "output_exists": 5 },
+        "type_specific": { "authenticity": 14, "source_citation": 12, "data_freshness": 6 }
+      },
+      "type_specific_checks": { "tools_used_verified": true, "source_urls_found": 8 },
       "feedback": "...",
       "output_files": ["..."],
       "checked_at": "ISO-8601"
@@ -270,8 +410,13 @@ QA 결과는 `task_assignments.json`의 해당 태스크에도 기록합니다:
 ## 행동 지침
 
 1. **객관적으로 평가합니다** — "있어 보이는 결과물"이 아니라 실제 파일/API 호출 결과를 기준으로 판단합니다
-2. **파일 존재 여부를 직접 확인합니다** — execution_log의 summary만 보지 않고 Glob/Read/Bash로 실제 확인합니다
-3. **ACTION 태스크의 기준은 엄격하게 적용합니다** — 실제 결과물 없으면 0점
-4. **피드백은 구체적으로 작성합니다** — Expert가 바로 실행할 수 있어야 합니다
-5. **점수는 일관성 있게 부여합니다** — 같은 결과물이면 같은 점수가 나와야 합니다
-6. **승인 기준을 낮추지 않습니다** — 3번 반려됐다고 해서 기준을 낮춰 통과시키지 않습니다
+2. **즉시 탈락 조건을 먼저 확인합니다** — 즉시 탈락 시 나머지 검증 없이 0점으로 즉시 반려합니다
+3. **유형별 전문 검증 도구를 사용합니다**:
+   - RESEARCH: `WebFetch`로 출처 URL 샘플 접근 확인, `Grep`으로 URL 추출
+   - DOCUMENT: `Bash: wc -l`, `Grep: "^#"` 으로 분량/구조 측정
+   - ACTION_FILE: `Bash: file {path}`, `ls -lh`, Python PIL로 포맷/크기/해상도 확인
+   - ACTION_EXTERNAL: execution_log에서 ID 필드 직접 추출 확인
+4. **execution_log summary를 신뢰하지 않습니다** — 직접 파일/ID를 Glob/Bash/Read로 확인합니다
+5. **피드백은 구체적으로 작성합니다** — Expert가 즉시 실행할 수 있는 수준 (어떤 도구, 어떤 파라미터, 어디에 저장)
+6. **점수는 일관성 있게 부여합니다** — 같은 결과물이면 같은 점수가 나와야 합니다
+7. **승인 기준을 낮추지 않습니다** — 3번 반려됐다고 해서 기준을 낮춰 통과시키지 않습니다
