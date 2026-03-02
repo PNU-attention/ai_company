@@ -134,7 +134,8 @@ model: sonnet
 
 ## 태스크 타입별 실행 단계
 
-**⚠️ 각 단계 실패 시 즉시 TOOL_ERROR 발생. 다음 단계 진행 금지.**
+**⚠️ RESEARCH/DOCUMENT: 각 단계 실패 시 즉시 TOOL_ERROR 발생.**
+**⚠️ ACTION: 실패 시 즉시 TOOL_ERROR 발생 금지. 폴백 체인(Level 1→2→3) 먼저 시도.**
 
 ### RESEARCH 태스크
 ```
@@ -158,39 +159,52 @@ Step 5. Read로 파일 확인 (섹션 누락/빈 내용 → 보완 후 재저장
 ### ACTION_FILE 태스크 (파일 생성)
 ```
 Step 1. session.json에서 execution_mode 확인
-Step 2. RUBE_MANAGE_CONNECTIONS로 필요 도구 연결 상태 확인
-         not_active → TOOL_ERROR (연결 방법 안내 포함)
-Step 3. 도구 호출로 결과물 생성
-         dry_run → 파일은 실제 생성, 외부 API만 mock
-         실패 → TOOL_ERROR (에러 메시지 포함)
-Step 4. company/outputs/{task_id}_{name}.{ext} 저장
-Step 5. Bash: ls -lh company/outputs/{task_id}_* 확인
+Step 2. 폴백 체인으로 결과물 생성
+         dry_run → Level 1 mock + 파일 실제 생성 (폴백 불필요)
+         production →
+           [Level 1] RUBE_MANAGE_CONNECTIONS 확인
+                     → not_connected → Level 2 즉시 이동
+                     → active → RUBE_MULTI_EXECUTE_TOOL 호출
+                       성공 → Step 3 / 실패 → Level 2
+           [Level 2] Bash curl / Python으로 서비스 API 직접 호출
+                     성공 → Step 3 / 실패 → Level 3
+           [Level 3] Python PIL / matplotlib / Bash로 Built-in 대체 생성
+                     성공 → Step 3 / 실패 → TOOL_ERROR (fallback_attempts 기록)
+Step 3. company/outputs/{task_id}_{name}.{ext} 저장
+Step 4. Bash: ls -lh company/outputs/{task_id}_* 확인
          파일 없음 또는 크기 0 → TOOL_ERROR
-Step 6. execution_log 기록
+Step 5. execution_log 기록 (fallback_used 포함)
 ```
 
 ### ACTION_EXTERNAL 태스크 (외부 서비스)
 ```
 Step 1. session.json에서 execution_mode 확인
-Step 2. RUBE_MANAGE_CONNECTIONS로 연결 상태 확인
-         not_active → TOOL_ERROR
-Step 3. 외부 API 호출
-         dry_run → {"post_id": "dry_run_mock_{task_id}", ...} mock 응답 사용
-         production → RUBE_MULTI_EXECUTE_TOOL로 실제 호출
-         실패 → TOOL_ERROR
-Step 4. 응답에서 ID (post_id / message_id 등) 추출
+         dry_run → mock 응답 {"post_id": "dry_run_mock_{task_id}"} → Step 3
+Step 2. 폴백 체인으로 외부 서비스 호출 (production 전용)
+           [Level 1] RUBE_MANAGE_CONNECTIONS 확인
+                     → not_connected → Level 2 즉시 이동
+                     → active → RUBE_MULTI_EXECUTE_TOOL 호출
+                       성공 → Step 3 / 실패 → Level 2
+           [Level 2] Bash curl로 서비스 API 직접 호출
+                     성공 → Step 3 / 실패 → Level 3
+           [Level 3] 파일 저장 + CEO에게 INFO_REQUEST (수동 처리 요청)
+                     CEO가 ID 제공 → Step 3 / CEO 거부 → TOOL_ERROR
+Step 3. 응답에서 ID (post_id / message_id 등) 추출
          ID 없음 → TOOL_ERROR ("ID 반환 없음")
-Step 5. execution_log에 ID 기록
+Step 4. execution_log에 ID + fallback_used 기록
 ```
 
 ## Rube MCP 호출 패턴
 
-Rube 도구가 필요한 경우 반드시 아래 순서로 호출합니다:
+Rube 도구가 필요한 경우 반드시 아래 순서로 호출하며, 실패 시 즉시 폴백 체인으로 이동합니다:
 
 ```
 1. RUBE_SEARCH_TOOLS: 필요한 도구 검색 → tool_slug, session_id 확보
-2. RUBE_MANAGE_CONNECTIONS: toolkit 연결 상태 확인 (ACTIVE 아니면 TOOL_ERROR)
+2. RUBE_MANAGE_CONNECTIONS: toolkit 연결 상태 확인
+   → not_connected → 폴백 Level 2 (직접 API) 시도
+   → active → 계속
 3. RUBE_MULTI_EXECUTE_TOOL: tool_slug + 스키마 맞는 arguments + memory: {} 전달
+   → 실패 → 폴백 Level 2 시도
 ```
 
 ## ACTION 태스크 완료 기준

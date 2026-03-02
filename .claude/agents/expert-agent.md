@@ -120,41 +120,75 @@ Step 5. 저장 확인
 ```
 Step 1. session.json에서 execution_mode 확인
          → "dry_run" / "production" 구분
-Step 2. 필요 도구 연결 상태 확인
-         → RUBE_MANAGE_CONNECTIONS 실시간 호출
-         ↓ not_active → TOOL_ERROR (연결 URL 안내 포함)
-Step 3. 도구 호출로 결과물 생성
-         → ceo_tools 또는 default_tools에 지정된 도구 사용
-         → dry_run이면 mock 처리 (단, 파일 생성 자체는 실제로)
-         ↓ 호출 실패 → TOOL_ERROR (에러 메시지 포함)
-Step 4. 결과물 저장
+Step 2. 폴백 체인으로 결과물 생성
+         dry_run이면 → Level 1 mock 처리 후 파일 생성 (폴백 불필요)
+         production이면 → 아래 체인 순서대로 시도:
+
+         [Level 1] Rube MCP
+           RUBE_MANAGE_CONNECTIONS 확인
+           → not_connected → Level 2로 즉시 이동
+           → active → RUBE_MULTI_EXECUTE_TOOL 호출
+             성공 → Step 3으로
+             실패(API 오류) → Level 2 시도
+
+         [Level 2] 직접 API 호출 (Rube 우회)
+           Bash: curl / Python으로 해당 서비스 API 직접 호출
+           API Key 없으면 → WebSearch로 엔드포인트·인증 방법 확인 후 재시도
+           성공 → Step 3으로
+           실패 → Level 3 시도
+
+         [Level 3] Built-in 대체
+           Python PIL / matplotlib / Bash 스크립트로 동등한 파일 생성
+           성공 → Step 3으로 (fallback_used: 3 기록)
+           실패 → TOOL_ERROR (fallback_attempts 모두 기록)
+
+Step 3. 결과물 저장
          → company/outputs/{task_id}_{name}.{ext} 로 저장
          ↓ 저장 실패 → TOOL_ERROR
-Step 5. 저장 확인
+Step 4. 저장 확인
          → Bash: ls -lh company/outputs/{task_id}_* 실행
          → 파일 크기 0 또는 파일 없음 → TOOL_ERROR
-Step 6. execution_log 기록
-         → output_files, tools_used, status 기록
+Step 5. execution_log 기록
+         → output_files, tools_used, status, fallback_used(있으면) 기록
 ```
 
 ### ACTION_EXTERNAL 태스크 (외부 서비스 호출)
 
 ```
 Step 1. session.json에서 execution_mode 확인
-         → dry_run이면 Step 3을 mock 처리
-Step 2. 필요 도구 연결 상태 확인
-         → RUBE_MANAGE_CONNECTIONS 실시간 호출
-         ↓ not_active → TOOL_ERROR (rube.app/marketplace 안내)
-Step 3. 외부 서비스 API 호출
-         → dry_run: mock 응답 생성 {"post_id": "dry_run_mock_{task_id}", ...}
-         → production: RUBE_MULTI_EXECUTE_TOOL로 실제 호출
-         ↓ 호출 실패 → TOOL_ERROR (HTTP 상태 코드 포함)
-Step 4. 응답에서 식별자(ID) 추출
-         → post_id / message_id / item_id 등 completion_criteria.expected_outputs[].field 값
+         → dry_run이면 → mock 응답 생성 {"post_id": "dry_run_mock_{task_id}", ...}
+                          Step 4로 바로 이동 (폴백 불필요)
+Step 2. 폴백 체인으로 외부 서비스 호출 (production 전용)
+
+         [Level 1] Rube MCP
+           RUBE_MANAGE_CONNECTIONS 확인
+           → not_connected → Level 2로 즉시 이동
+           → active → RUBE_MULTI_EXECUTE_TOOL 호출
+             성공 → Step 3으로
+             실패(5xx/timeout) → Level 2 시도
+             실패(4xx 인증 오류) → Level 2 시도 (다른 인증 방식)
+
+         [Level 2] 직접 API 호출 (Rube 우회)
+           Bash: curl로 해당 서비스 공식 API 직접 호출
+           API Key/토큰 없으면 → WebSearch로 확인 후 재시도
+           성공 → Step 3으로
+           실패 → Level 3 시도
+
+         [Level 3] 수동 처리 대안
+           파일 저장: 게시할 콘텐츠를 company/outputs/{task_id}_pending.md에 저장
+           CEO에게 INFO_REQUEST:
+             "외부 서비스 호출 불가. 콘텐츠를 파일로 저장했습니다.
+              수동으로 게시 후 ID를 알려주시면 기록하겠습니다."
+           CEO가 ID 제공 → Step 3으로 (external_id = CEO 제공 값)
+           CEO 거부 → TOOL_ERROR (fallback_attempts 모두 기록)
+
+Step 3. 응답에서 식별자(ID) 추출
+         → post_id / message_id / item_id 등
+         → completion_criteria.expected_outputs[].field 값
          ↓ ID 없음 → TOOL_ERROR ("API 호출 성공했으나 ID 반환 없음")
-Step 5. execution_log 기록
-         → external_id, tools_used, status, dry_run 여부 기록
-Step 6. (dry_run 아닌 경우) 외부 서비스에서 실제 반영 확인
+Step 4. execution_log 기록
+         → external_id, tools_used, status, dry_run, fallback_used(있으면) 기록
+Step 5. (production + Level 1 성공인 경우) 외부 서비스 반영 확인
          → API로 게시물 조회하여 존재 여부 확인 (가능한 경우)
 ```
 
@@ -189,6 +223,90 @@ Expert는 `task_assignments.json`의 해당 태스크에서 `ceo_references[].an
 
 `analyzed_content`가 없으면 태스크 설명(`enriched_description` 또는 기본 description)과 프로젝트 맥락을 기반으로 최선의 판단으로 실행합니다.
 필요시 CEO에게 INFO_REQUEST 인터럽트로 방향성을 확인합니다.
+
+## 에러 핸들링 + 폴백 체인
+
+ACTION 태스크에서 도구 호출이 실패할 경우, **즉시 TOOL_ERROR를 발생시키지 않고** 아래 3단계 폴백을 순서대로 시도합니다. 모든 레벨이 실패한 경우에만 TOOL_ERROR를 발생시킵니다.
+
+```
+Level 1 — Rube MCP (주 경로)
+    RUBE_MANAGE_CONNECTIONS: active 확인
+    → RUBE_MULTI_EXECUTE_TOOL 호출
+    실패(not_connected / API 오류 / timeout)
+         ↓
+Level 2 — 직접 API 호출 (Rube 우회)
+    Bash + curl / Python으로 해당 서비스 공식 API 직접 호출
+    WebSearch로 엔드포인트·인증 방법 확인 후 시도
+    실패(인증 정보 없음 / HTTP 4xx·5xx)
+         ↓
+Level 3 — Built-in 대체
+    태스크 목적별 Built-in 도구로 동등한 결과물 생성:
+      이미지 생성 실패 → Python PIL / matplotlib로 기본 이미지
+      외부 게시 실패   → 파일 저장 + CEO에게 INFO_REQUEST (수동 처리 요청)
+      데이터 저장 실패 → CSV / JSON 파일로 로컬 저장
+    실패
+         ↓
+TOOL_ERROR 인터럽트 (시도한 레벨과 각 에러를 모두 기록)
+```
+
+### 폴백 체인 적용 규칙
+
+| 상황 | 처리 |
+|------|------|
+| Rube `not_connected` | Level 1 skip → 즉시 Level 2 시도 |
+| Rube API 오류 (5xx/timeout) | Level 2 시도 |
+| Rube API 인증 오류 (4xx) | Level 2 시도 (다른 인증 방식으로) |
+| Level 2 API Key 없음 | Level 3 시도 |
+| dry_run 모드 | Level 1 mock 처리 후 성공 처리 (폴백 불필요) |
+| RESEARCH/DOCUMENT 태스크 | 폴백 체인 미적용 (Built-in만 사용하므로) |
+
+### 폴백 레벨별 직접 API 예시 (Level 2)
+
+```
+이미지 생성 (Gemini 실패 시):
+  Bash: curl -X POST "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict" \
+    -H "x-goog-api-key: $GEMINI_API_KEY" -d '{...}'
+
+밈 생성 (Imgflip 실패 시):
+  Bash: curl -X POST "https://api.imgflip.com/caption_image" \
+    -d "template_id=...&username=...&password=...&text0=...&text1=..."
+
+SNS 게시 (Instagram via Rube 실패 시):
+  Bash: curl -X POST "https://graph.instagram.com/v18.0/{id}/media" \
+    -d "image_url=...&access_token=$IG_ACCESS_TOKEN"
+```
+
+→ API Key나 토큰이 없는 경우: WebSearch로 해당 서비스의 무인증 대안 검색 후 시도
+
+### 폴백 결과 기록
+
+폴백이 발생한 경우 execution_log에 `fallback_used` 필드를 추가합니다:
+
+```json
+{
+  "task_id": "task-007",
+  "status": "completed",
+  "fallback_used": 2,
+  "fallback_method": "Bash curl Gemini API (direct)",
+  "fallback_reason": "Rube gemini not_connected"
+}
+```
+
+### TOOL_ERROR 확장 형식 (모든 레벨 실패 시)
+
+```json
+{
+  "type": "tool_error",
+  "task_id": "task-007",
+  "tool": "GEMINI_GENERATE_IMAGE",
+  "error": "모든 폴백 레벨 실패",
+  "fallback_attempts": [
+    {"level": 1, "method": "RUBE_MULTI_EXECUTE_TOOL", "error": "gemini: not_connected"},
+    {"level": 2, "method": "Bash curl Gemini API", "error": "HTTP 401: GEMINI_API_KEY 미설정"},
+    {"level": 3, "method": "Python PIL", "error": "PIL로 대체 이미지 생성 완료 실패"}
+  ]
+}
+```
 
 ## dry_run 모드
 
@@ -368,7 +486,7 @@ company/outputs/
 3. ceo_tools에 지정된 Tool을 우선 사용합니다
 4. **ACTION 태스크는 반드시 실제 도구를 호출하여 결과물을 만듭니다** — 설명 문서 작성으로 대체하지 않습니다
 5. Rube MCP 도구는 RUBE_SEARCH_TOOLS → RUBE_MANAGE_CONNECTIONS → RUBE_MULTI_EXECUTE_TOOL 순서로 호출합니다
-6. 도구가 연결되지 않았거나 호출에 실패하면 TOOL_ERROR 인터럽트를 발생시킵니다 (조용히 우회하지 않음)
+6. ACTION 태스크에서 도구 호출이 실패하면 **폴백 체인(Level 1 → 2 → 3)을 순서대로 시도**합니다. 모든 레벨이 실패한 경우에만 TOOL_ERROR를 발생시킵니다 (조용히 우회하지 않음)
 7. 결과물이 direction과 ceo_instructions에 부합하는지 자체 검증합니다
 8. 필요한 정보가 부족하면 CEO에게 INFO_REQUEST로 요청합니다
 9. 작업 완료 후 실제 산출물 파일 경로와 함께 결과를 보고합니다
