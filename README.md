@@ -684,10 +684,10 @@ ai_company/
 - [x] `docs/specs/tool-discovery-strategy.md` 설계 문서 신설
 
 ### 단기 목표 (2주 내)
-- [ ] [단기-1] Expert 실행 결정론적 단계 분해 (n8n 방식)
-- [ ] [단기-2] 에러 핸들링 + 폴백 체인 ~~(구현 완료 확인 필요)~~
-- [ ] [단기-3] `completion_criteria` 필드 추가 (`task_assignments.json`)
-- [ ] [단기-4] dry_run 모드 도입 (`session.json`)
+- [x] [단기-1] Expert 실행 결정론적 단계 분해 (n8n 방식)
+- [x] [단기-2] 에러 핸들링 + 폴백 체인
+- [x] [단기-3] `completion_criteria` 필드 추가 (`task_assignments.json`)
+- [x] [단기-4] dry_run 모드 도입 (`session.json`)
 
 ### 중기 목표 (1달 내)
 - [x] [중기-1] HR agent 파일 → 실제 병렬 독립 실행 (세션 2 검증)

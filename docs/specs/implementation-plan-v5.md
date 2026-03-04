@@ -639,10 +639,10 @@ SKILL.md Phase 0에 추가:
   ✅ qa-agent.md 갱신 (ACTION_VISUAL → docs/design-system.md 명시적 참조)
 
 단기 (2주 내):
-  ☐ [단기-1] Expert 실행 결정론적 단계 분해
-  ☐ [단기-2] 에러 핸들링 + 폴백 체인
-  ☐ [단기-3] completion_criteria 필드 추가
-  ☐ [단기-4] dry_run 모드 도입
+  ✅ [단기-1] Expert 실행 결정론적 단계 분해
+  ✅ [단기-2] 에러 핸들링 + 폴백 체인
+  ✅ [단기-3] completion_criteria 필드 추가
+  ✅ [단기-4] dry_run 모드 도입
 
 중기 (1달 내):
   ✅ [중기-1] HR agent 파일 → 실제 병렬 독립 실행 (세션 2에서 실제 동작 검증)
