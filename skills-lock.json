@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "skills": {
+    "ecosystem": {
+      "source": "vibeindex/skills",
+      "sourceType": "github",
+      "computedHash": "37844860104bdc6aa6b2c3be3f8ef77fb8af37dd1ae5dd4899130026b2b03cc1"
+    },
+    "image-generation-mcp": {
+      "source": "supercent-io/skills-template",
+      "sourceType": "github",
+      "computedHash": "c27371f2bfb454eb70b1350203e76a58863387eee0826fb28e99dd0f11b83b68"
+    },
+    "new": {
+      "source": "vibeindex/skills",
+      "sourceType": "github",
+      "computedHash": "708708345a0085a4fef03a1e2b8a47ffd77d922e921b81e3185d524fcb4e4906"
+    },
+    "pollinations-ai": {
+      "source": "supercent-io/skills-template",
+      "sourceType": "github",
+      "computedHash": "ef52c38ea877c389f72b291f5f1dc8a5cf370e0f60b50077644793e934a2f91e"
+    },
+    "rising": {
+      "source": "vibeindex/skills",
+      "sourceType": "github",
+      "computedHash": "c64d2c2ca4331553726d4b9de75957984f560b8edd1091d3975d8a9d1b291a2c"
+    },
+    "versus": {
+      "source": "vibeindex/skills",
+      "sourceType": "github",
+      "computedHash": "4be6adc21d52d00f243701aa8351838f38601bd45f32c58fd2d0b25e6f4d2a5b"
+    },
+    "vibeindex": {
+      "source": "vibeindex/skills",
+      "sourceType": "github",
+      "computedHash": "f178e64638608d60ec7669d4dc3fa6de193fcceb51d73831d7d11fea244f4f77"
+    }
+  }
+}
