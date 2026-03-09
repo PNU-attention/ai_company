@@ -160,3 +160,6 @@ ai_company/
 - [시각 디자인 규칙 (QA 검증 기준)](docs/design-system.md)
 - [Claude Code 작업 가이드](.claude/CLAUDE.md)
 
+## 🌱 Manage Configuration
+
+![Alt](https://repobeats.axiom.co/api/embed/bf880e5bd1f5035dcface78a88e17ac518f9ccc1.svg "Repobeats analytics image")
